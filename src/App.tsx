@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import CreatePage from "./pages/CreatePage";
 import FindPage from "./pages/FindPage";
+import CreatePerson from "./pages/CreatePerson";
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,9 @@ const App: React.FC = () => {
 
         {/* 그룹 찾기 페이지 */}
         <Route path="/groupFind" element={<FindPage />} />
+        
+        {/* 그룹원 및 그룹장 정보 페이지 */}
+        <Route path="/createPerson" element={<CreatePerson />} />
       </Routes>
     </Router>
   );

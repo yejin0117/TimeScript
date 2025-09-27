@@ -14,6 +14,7 @@ const CardContainer = styled.div`
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
   border-radius: 16px;
+  border: 2px solid #d9d9d9;
   padding: 32px;
   text-align: center;
   cursor: pointer;
@@ -21,7 +22,7 @@ const CardContainer = styled.div`
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
   }
 `;
 

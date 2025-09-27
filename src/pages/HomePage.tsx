@@ -2,24 +2,25 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import Card from "../components/Card";
+import Header from "../components/Header";
 
 const Container = styled.main`
   max-width: 960px;
   margin: 0 auto;
-  padding: 80px 24px;
+  padding: 50px 24px;
   text-align: center;
 `;
 
 const Title = styled.h2`
   font-size: 48px;
   font-weight: bold;
-  color: white;
+  color: rgba(0, 0, 0, 0.8);
   margin-bottom: 16px;
 `;
 
 const Subtitle = styled.p`
   font-size: 20px;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(0, 0, 0, 0.8);
   margin-bottom: 48px;
 `;
 
@@ -34,6 +35,8 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
+    <>
+    <Header/>
     <Container>
       <Title>
         함께하는 시간을
@@ -61,6 +64,7 @@ const HomePage: React.FC = () => {
         />
       </CardGrid>
     </Container>
+    </>
   );
 };
 

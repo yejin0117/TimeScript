@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom"; // 추가
 
 interface Group {
   id: number;
@@ -18,6 +19,7 @@ const FindPage: React.FC = () => {
   const [inviteCode, setInviteCode] = useState("");
   const [foundGroup, setFoundGroup] = useState<Group | null>(null);
   const [message, setMessage] = useState("");
+  const navigate = useNavigate(); // 추가
 
   const handleSearch = () => {
     const group = mockGroups.find(
@@ -35,8 +37,8 @@ const FindPage: React.FC = () => {
   };
 
   const handleJoin = () => {
-    alert(`${foundGroup?.name} 그룹에 참여하셨습니다!`);
-    // 추후 백엔드 API 연동 예정
+    // 그룹원 정보 입력 페이지로 이동
+    navigate("/createPerson?role=member");
   };
 
   return (

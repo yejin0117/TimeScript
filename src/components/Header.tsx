@@ -1,14 +1,13 @@
 import React from "react";
 import styled from "styled-components";
-
-interface HeaderProps {
-  onBack?: () => void;
-}
+import { useNavigate } from "react-router-dom";
 
 const HeaderContainer = styled.header`
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  height: 60px;
+  display: flex;
+  justify-component: center;
+  background: rgba(255, 255, 255, 1);
+  border-bottom: 1px solid rgba(35, 33, 33, 0.2);
 `;
 
 const HeaderInner = styled.div`
@@ -18,32 +17,25 @@ const HeaderInner = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor:pointer;
 
   h1 {
     font-size: 24px;
     font-weight: bold;
-    color: white;
-  }
-
-  button {
-    color: rgba(255, 255, 255, 0.8);
-    background: none;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-
+    color: black;
+    
     &:hover {
-      color: white;
+      color: #348224ff;
     }
   }
 `;
 
-const Header: React.FC<HeaderProps> = ({ onBack }) => {
+const Header: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <HeaderContainer>
       <HeaderInner>
-        <h1>SyncTogether</h1>
-        {onBack && <button onClick={onBack}>← 홈으로</button>}
+        <h1 onClick={() => navigate("/")}>SyncTogether</h1>
       </HeaderInner>
     </HeaderContainer>
   );

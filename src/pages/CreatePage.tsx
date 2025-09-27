@@ -37,23 +37,10 @@ const Input = styled.input`
   }
 `;
 
-const Textarea = styled.textarea`
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-
-  &:focus {
-    border-color: #3b82f6;
-    outline: none;
-  }
-`;
-
 const Select = styled.select`
   width: 100%;
   padding: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
   border: 1px solid #ddd;
   border-radius: 8px;
 `;
@@ -73,23 +60,61 @@ const Button = styled.button`
   }
 `;
 
+const Label = styled.div`
+  font-weight: bold;
+  margin-bottom: 8px;
+`;
+
+const DateTimeContainer = styled.div`
+  display: flex;
+  gap: 8px; // 날짜와 시간 사이 간격
+  margin-bottom: 16px;
+`;
+
 const SuccessBox = styled.div`
   text-align: center;
   padding: 40px;
 `;
 
+// ...existing code...
 const CreatePage: React.FC = () => {
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
   const [eventName, setEventName] = useState("");
+  const [eventReason, setEventReason] = useState("");
+  const [customReason, setCustomReason] = useState("");
+  const [date, setDate] = useState(""); // 날짜
+  const [time, setTime] = useState(""); // 시간
+
+  const handleReasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setEventReason(e.target.value);
+    if (e.target.value !== "직접입력") {
+      setCustomReason("");
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const finalReason = eventReason === "직접입력" ? customReason : eventReason;
+
     if (!eventName.trim()) {
       alert("약속 이름을 입력해주세요!");
       return;
     }
-    setSubmitted(true);
+    if (!finalReason.trim()) {
+      alert("모이는 이유를 선택하거나 입력해주세요!");
+      return;
+    }
+    if (!date || !time) {
+      alert("약속 날짜와 시간을 입력해주세요!");
+      return;
+    }
+
+    const deadline = `${date} ${time}`; // 날짜와 시간을 합쳐서 최종 deadline
+    console.log("약속 마감일:", deadline); // 서버 전송 시 사용 가능
+
+    // setSubmitted(true); // 이 부분을 아래로 변경
+    navigate("/createPerson");
   };
 
   return (
@@ -107,14 +132,43 @@ const CreatePage: React.FC = () => {
                   value={eventName}
                   onChange={(e) => setEventName(e.target.value)}
                 />
-                <Textarea placeholder="설명 (선택사항)" rows={3} />
-
-                <Select>
-                  <option>오전 (9:00 - 12:00)</option>
-                  <option>오후 (13:00 - 18:00)</option>
-                  <option>저녁 (19:00 - 22:00)</option>
-                  <option>종일</option>
+                <Select value={eventReason} onChange={handleReasonChange}>
+                  <option value="">모이는 이유를 선택하세요</option>
+                  <option value="직접입력">직접입력</option>
+                  <option value="가족행사">가족행사</option>
+                  <option value="과제">과제</option>
+                  <option value="데이트">데이트</option>
+                  <option value="모임">모임</option>
+                  <option value="스터디">스터디</option>
+                  <option value="생일파티">생일파티</option>
+                  <option value="영화">영화</option>
+                  <option value="운동">운동</option>
+                  <option value="회식">회식</option>
+                  <option value="회의">회의</option>
                 </Select>
+                {eventReason === "직접입력" && (
+                  <Input
+                    type="text"
+                    placeholder="모이는 이유를 직접 입력하세요"
+                    value={customReason}
+                    onChange={e => setCustomReason(e.target.value)}
+                  />
+                )}
+
+                {/* 날짜와 시간 입력 */}
+                <Label>응답 기한</Label>
+                <DateTimeContainer>
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={e => setDate(e.target.value)}
+                  />
+                  <Input
+                    type="time"
+                    value={time}
+                    onChange={e => setTime(e.target.value)}
+                  />
+                </DateTimeContainer>
 
                 <Button type="submit">약속 만들기</Button>
               </form>
