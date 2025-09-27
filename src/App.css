@@ -14,18 +14,18 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: #000000; /* 노란색으로 변경 */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: #ffffff; /* 텍스트 색상을 어두운 색으로 변경하여 가독성 향상 */
 }
 
 .App-link {
-  color: #61dafb;
+  color: #9990ff; /* 링크 색상을 파란색으로 변경하여 노란 배경과 대비 */
 }
 
 @keyframes App-logo-spin {
