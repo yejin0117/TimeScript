@@ -1,38 +1,34 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom"; // 추가
+import { GroupsApi } from "../api/groups";
 
-interface Group {
-  id: number;
-  name: string;
-  inviteCode: string;
-}
-
-const mockGroups: Group[] = [
-  { id: 1, name: "친구모임", inviteCode: "ABC123" },
-  { id: 2, name: "스터디그룹", inviteCode: "STUDY22" },
-  { id: 3, name: "동아리모임", inviteCode: "CLUB99" },
-];
+type FoundGroup = { groupId: number; name: string; inviteCode: string };
 
 const FindPage: React.FC = () => {
   const [groupName, setGroupName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
-  const [foundGroup, setFoundGroup] = useState<Group | null>(null);
   const [message, setMessage] = useState("");
+    const [foundGroup, setFoundGroup] = useState<FoundGroup | null>(null);
   const navigate = useNavigate(); // 추가
 
-  const handleSearch = () => {
-    const group = mockGroups.find(
-      (g) =>
-        g.name === groupName.trim() && g.inviteCode === inviteCode.trim()
-    );
-
-    if (group) {
-      setFoundGroup(group);
-      setMessage("");
-    } else {
-      setFoundGroup(null);
-      setMessage("해당 그룹을 찾을 수 없습니다.");
+  const handleSearch = async () => {
+    if (!groupName.trim() || !inviteCode.trim()) {
+      setMessage("그룹명과 초대코드를 입력하세요.");
+      return;
+    }
+    try {
+      const res = await GroupsApi.lookup(groupName.trim(), inviteCode.trim());
+      localStorage.setItem("groupId", String(res.groupId));
+      localStorage.setItem("inviteCode", inviteCode.trim());
+       setFoundGroup({
+        groupId: res.groupId,
+        name: res.name,
+        inviteCode: inviteCode.trim(),
+       });
+             setMessage("");
+    } catch (e: any) {
+      setMessage(e.message || "그룹을 찾을 수 없습니다.");
     }
   };
 

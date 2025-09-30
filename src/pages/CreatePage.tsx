@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { GroupsApi } from "../api/groups";
+import { toOffsetDateTime } from "../utils/time";
 import Header from "../components/Header";
 
 const Main = styled.main`
@@ -9,7 +11,7 @@ const Main = styled.main`
   padding: 48px 24px;
 `;
 
-const Card = styled.div`
+const Card = styled.div`  
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(4px);
   border-radius: 16px;
@@ -93,7 +95,7 @@ const CreatePage: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalReason = eventReason === "직접입력" ? customReason : eventReason;
 
@@ -110,11 +112,20 @@ const CreatePage: React.FC = () => {
       return;
     }
 
-    const deadline = `${date} ${time}`; // 날짜와 시간을 합쳐서 최종 deadline
-    console.log("약속 마감일:", deadline); // 서버 전송 시 사용 가능
+    try {
+      const responseDeadline = toOffsetDateTime(date, time, 540);
+      const { groupId, inviteCode } = await GroupsApi.createGroupSimple({
+        name: eventName,
+        reason: finalReason,
+        responseDeadline,
+      });
+      localStorage.setItem("groupId", String(groupId));
+      localStorage.setItem("inviteCode", inviteCode);
+      navigate("/createPerson?role=leader");
+    } catch (e: any) {
+      alert(e.message || "그룹 생성 실패");
+    }
 
-    // setSubmitted(true); // 이 부분을 아래로 변경
-    navigate("/createPerson");
   };
 
   return (
