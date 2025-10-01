@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import Header from "../components/Header";
+import { GroupsApi } from "../api/groups";
+
 
 const Main = styled.main`
   max-width: 500px;
@@ -68,13 +70,13 @@ const CreatePerson: React.FC = () => {
   // 경로에 따라 역할 결정
   // /create-person?role=member 또는 /create-person?role=leader
   const searchParams = new URLSearchParams(location.search);
-  const role = searchParams.get("role") === "member" ? "member" : "leader";
+const roleParam = searchParams.get("role");
+  const role: "LEADER" | "MEMBER" = roleParam === "member" ? "MEMBER" : "LEADER";
+  const title = role === "LEADER" ? "그룹장 정보 입력" : "그룹원 정보 입력";
+  const successMsg = role === "LEADER" ? "그룹장 정보가 저장되었습니다!" : "그룹원 정보가 저장되었습니다!";
 
-  const title = role === "leader" ? "그룹장 정보 입력" : "그룹원 정보 입력";
-  const successMsg = role === "leader" ? "그룹장 정보가 저장되었습니다!" : "그룹원 정보가 저장되었습니다!";
 
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nickname.trim()) {
       alert("닉네임을 입력해주세요!");
@@ -92,7 +94,24 @@ const CreatePerson: React.FC = () => {
       alert("선호 지역 입력해주세요!");
       return;
     }
-    setSubmitted(true);
+try {
+      const groupId = Number(localStorage.getItem("groupId"));
+      const inviteCode = localStorage.getItem("inviteCode") || "";
+      const { memberId, token } = await GroupsApi.addMember(groupId, {
+        inviteCode,
+        nickname,
+        password,
+        departureText: departure,
+        preferredAreaText: favoritePlace,
+        role,
+      });
+      localStorage.setItem("memberId", String(memberId));
+      localStorage.setItem("token", token);
+      setSubmitted(true);
+    } catch (e: any) {
+      alert(e.message || "저장 실패");
+    }
+
   };
 
   return (
