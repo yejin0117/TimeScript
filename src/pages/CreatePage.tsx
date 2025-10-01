@@ -194,6 +194,9 @@ const CreatePage: React.FC = () => {
               <Button onClick={() => navigate("/")} style={{ marginTop: "24px" }}>
                 홈으로 돌아가기
               </Button>
+              <Button onClick={() => navigate("/selectTime")} style={{ marginTop: "24px" }}>
+                약속 시간 선택하기
+              </Button>
             </SuccessBox>
           )}
         </Card>
