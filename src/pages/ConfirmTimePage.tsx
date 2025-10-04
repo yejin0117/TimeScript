@@ -153,6 +153,11 @@ interface Candidate {
   rank?: number;
 }
 
+interface PlaceRecommendation {
+  name: string;
+  address: string;
+}
+
 const ConfirmTimePage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -162,6 +167,7 @@ const ConfirmTimePage: React.FC = () => {
   const [topCandidate, setTopCandidate] = useState<Candidate | null>(null);
   const [showAllCandidates, setShowAllCandidates] = useState(false);
 
+
   const totalPeople = 5;
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
@@ -170,6 +176,27 @@ const ConfirmTimePage: React.FC = () => {
     "2025-10-11": { 9: 1, 13: 2, 16: 2, 17: 2 },
     "2025-10-12": { 15: 2, 16: 3, 17: 3, 18: 5, 19: 5 },
   };
+
+const dummyPlaceData: Record<string, PlaceRecommendation[]> = {
+  "강남": [
+    { name: "스타벅스 강남점", address: "서울 강남구" },
+    { name: "카페 마마스 강남점", address: "서울 강남구" },
+  ],
+  "홍대": [
+    { name: "홍대 카페 1", address: "서울 마포구" },
+    { name: "홍대 카페 2", address: "서울 마포구" },
+  ],
+};
+  
+const dummyWeatherData: Record<string, { weather: string; temp: number }> = {
+  "2025-10-10": { weather: "맑음", temp: 22 },
+  "2025-10-11": { weather: "흐림", temp: 19 },
+  "2025-10-12": { weather: "비", temp: 17 },
+};
+
+  const [weatherData, setWeatherData] = useState(dummyWeatherData);
+const [placeData, setPlaceData] = useState(dummyPlaceData);
+const [selectedRegion, setSelectedRegion] = useState("강남"); // 예시
 
   const formatDate = (date: Date) => {
     const y = date.getFullYear();
@@ -258,10 +285,20 @@ useEffect(() => {
 }, []);
 
 
-  const handleConfirm = () => {
-    if(!selectedCandidate) return;
+const handleConfirm = () => {
+  if (!selectedCandidate) {
+    // 선택된 후보가 없으면 1순위 후보 자동 선택
+    const firstRankCandidate = rankedCandidates.find(c => c.rank === 1);
+    if (firstRankCandidate) {
+      setSelectedCandidate(firstRankCandidate);
+      setSelectedDate(new Date(firstRankCandidate.date));
+      setShowModal(true);
+    }
+  } else {
     setShowModal(true);
-  };
+  }
+};
+
 
   const handleShare = () => {
     if(!selectedCandidate) return;
@@ -285,19 +322,28 @@ useEffect(() => {
           <ul>
             {(showAllCandidates ? rankedCandidates : rankedCandidates.filter(c => c.rank === 1))
               .map((c, idx) => (
-              <li key={idx}
-                  style={{
-                    cursor:"pointer",
-                    fontWeight: selectedCandidate===c||c.rank===1 ? "bold" : "normal",
-                    color: c.rank===1 ? "#1976d2" : "#333",
-                    fontSize: c.rank===1 ? 19 : 18,
-                  }}
-                  onClick={()=> {
-                    setSelectedCandidate(c);
-                    setSelectedDate(new Date(c.date));
-                  }}>
-                {`${c.date} | ${c.start}:00 ~ ${c.end+1}:00 (${c.participants}명)`} {c.rank===1 ? "(1순위)" : `(${c.rank}순위)`}
-              </li>
+<li
+  key={idx}
+  style={{
+    cursor:"pointer",
+    fontWeight: selectedCandidate===c||c.rank===1 ? "bold" : "normal",
+    color: c.rank===1 ? "#1976d2" : "#333",
+    fontSize: c.rank===1 ? 19 : 18,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  }}
+  onClick={()=> {
+    setSelectedCandidate(c);
+    setSelectedDate(new Date(c.date));
+  }}
+>
+  <span>{`${c.date} | ${c.start}:00 ~ ${c.end+1}:00 (${c.participants}명)`} {c.rank===1 ? "(1순위)" : `(${c.rank}순위)`}</span>
+  <span style={{marginLeft: "12px"}}>
+    {weatherData[c.date] ? `${weatherData[c.date].weather} / ${weatherData[c.date].temp}°C` : "로딩..."}
+  </span>
+</li>
+
             ))}
           </ul>
 
@@ -307,6 +353,15 @@ useEffect(() => {
             {showAllCandidates ? "접기" : "더보기"}
           </Button>
         </CandidateList>
+        <div style={{ marginTop: "8px", fontSize: "14px", color: "#555" }}>
+  <strong>추천 장소:</strong>
+  <ul>
+    {placeData[selectedRegion]?.map((p, idx) => (
+      <li key={idx}>{`${p.name} (${p.address})`}</li>
+    )) || <li>추천 장소가 없습니다.</li>}
+  </ul>
+</div>
+
 
         <Button onClick={handleConfirm}>시간 확정하기</Button>
       </InfoBox>
@@ -371,7 +426,6 @@ useEffect(() => {
           </ModalBox>
         </ModalBackground>
       )}
-
     </Container>
     </>
   );
