@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Calendar from "react-calendar";
+import Header from "../components/Header";
 import "react-calendar/dist/Calendar.css";
 
 // ---------------- 스타일 ----------------
@@ -95,18 +96,22 @@ const TimeTable = styled.table`
 
 const TimeRow = styled.tr``;
 
-const TimeCellTable = styled.td<{ percent: number; selected?: boolean; top?: boolean }>`
+const TimeCellTable = styled.td<{
+  percent: number;
+  selected?: boolean;
+  rank1?: boolean;
+}>`
   height: 25px;
   border: 1px solid #ddd;
-  background: ${({ selected, top, percent }) =>
+  background: ${({ selected, rank1, percent }) =>
     selected ? "#ffa500" :
-    top ? "#1976d2" :
+    rank1 ? "#1976d2" :
     percent === 0 ? "#fff" :
     percent <= 25 ? "#cce5ff" :
     percent <= 50 ? "#82c1ff" :
     percent <= 75 ? "#2994ff" :
     "#005cb9"};
-  color: ${({ selected, top, percent }) => (selected || top || percent > 50 ? "#fff" : "#333")};
+  color: ${({ selected, rank1, percent }) => (selected || rank1 || percent > 50 ? "#fff" : "#333")};
   cursor: pointer;
 `;
 
@@ -145,14 +150,17 @@ interface Candidate {
   start: number;
   end: number;
   participants: number;
+  rank?: number;
 }
 
 const ConfirmTimePage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [topCandidate, setTopCandidate] = useState<Candidate | null>(null);
+  const [rankedCandidates, setRankedCandidates] = useState<Candidate[]>([]);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [topCandidate, setTopCandidate] = useState<Candidate | null>(null);
+  const [showAllCandidates, setShowAllCandidates] = useState(false);
 
   const totalPeople = 5;
   const hours = Array.from({ length: 24 }, (_, i) => i);
@@ -170,36 +178,85 @@ const ConfirmTimePage: React.FC = () => {
     return `${y}-${m}-${d}`;
   };
 
-  useEffect(() => {
-    // 전체 후보 계산
-    const allCandidates: Candidate[] = [];
-    Object.keys(multiSelectedTimes).forEach(dateKey => {
-      const times = multiSelectedTimes[dateKey];
-      const hourList = Object.keys(times).map(Number).sort((a, b) => a - b);
+useEffect(() => {
+  const allCandidates: Candidate[] = [];
 
-      let start: number | null = null;
-      let minP = 0;
+  Object.keys(multiSelectedTimes).forEach(dateKey => {
+    const times = multiSelectedTimes[dateKey];
+    const hourList = Object.keys(times).map(Number).sort((a, b) => a - b);
 
-      for (let i=0;i<hourList.length;i++){
-        const h = hourList[i];
-        if (times[h]===totalPeople){
-          if(start===null) start=h;
-        } else {
-          if(start!==null){
-            allCandidates.push({date:dateKey,start,end:h-1,participants:totalPeople});
-            start=null;
-          }
-        }
+    let start: number | null = null;
+    let maxCount: number | null = null;
+
+    for (let i = 0; i < hourList.length; i++) {
+      const h = hourList[i];
+      const count = times[h];
+
+      if (count === 0) {
+        start = null;
+        maxCount = null;
+        continue;
       }
-      if(start!==null) allCandidates.push({date:dateKey,start,end:hourList[hourList.length-1],participants:totalPeople});
-    });
 
-    const top = allCandidates.sort((a,b)=> b.participants!==a.participants ? b.participants-a.participants : (b.end-b.start)-(a.end-a.start))[0] || null;
+      if (start === null) {
+        start = h;
+        maxCount = count;
+      } else if (h === hourList[i - 1] + 1 && count === maxCount) {
+        // 연속된 시간이며 참석인원이 최대값이면 계속 확장
+        // do nothing
+      } else {
+        allCandidates.push({
+          date: dateKey,
+          start: start!,
+          end: hourList[i - 1],
+          participants: maxCount!,
+        });
+        start = h;
+        maxCount = count;
+      }
+    }
 
-    setCandidates(allCandidates);
-    setTopCandidate(top);
-    if(top) setSelectedDate(new Date(top.date));
-  }, []);
+    if (start !== null) {
+      allCandidates.push({
+        date: dateKey,
+        start,
+        end: hourList[hourList.length - 1],
+        participants: maxCount!,
+      });
+    }
+  });
+
+  // 최대 참석 인원 기준으로 정렬
+  const sortedCandidates = allCandidates.sort((a, b) => {
+    if (b.participants !== a.participants) return b.participants - a.participants;
+    if ((b.end - b.start) !== (a.end - a.start)) return (b.end - b.start) - (a.end - a.start);
+    return a.date.localeCompare(b.date);
+  });
+
+  // 순위 부여
+  let rank = 1;
+  let prevParticipants = -1;
+  let prevLength = -1;
+  let prevDate = "";
+  const rankedCandidatesArr: Candidate[] = [];
+
+  sortedCandidates.forEach(c => {
+    const length = c.end - c.start + 1;
+    if (c.participants !== prevParticipants || length !== prevLength || c.date !== prevDate) {
+      prevParticipants = c.participants;
+      prevLength = length;
+      prevDate = c.date;
+      rank = rankedCandidatesArr.length + 1;
+    }
+    rankedCandidatesArr.push({ ...c, rank });
+  });
+
+  setCandidates(rankedCandidatesArr);
+  setRankedCandidates(rankedCandidatesArr);
+  setTopCandidate(rankedCandidatesArr[0] || null);
+  if (rankedCandidatesArr[0]) setSelectedDate(new Date(rankedCandidatesArr[0].date));
+}, []);
+
 
   const handleConfirm = () => {
     if(!selectedCandidate) return;
@@ -216,32 +273,42 @@ const ConfirmTimePage: React.FC = () => {
       alert("공유 링크가 클립보드에 복사되었습니다.");
     }
   };
-  
-// 후보 정렬 후 순위 부여
-const rankedCandidates = [...candidates]
-  .sort((a, b) => b.participants - a.participants || (b.end - b.start) - (a.end - a.start))
-  .map((c, idx) => ({ ...c, rank: idx + 1 }));
 
   return (
+    <>
+    <Header />
     <Container>
       <Title>최종 약속 시간 확정</Title>
-
       <InfoBox>
-        <div>응답 마감일: <strong>2025-10-08 23:59</strong></div>
-        <div>마감 이후 위 기준으로 자동 확정됩니다.</div>
-          <CandidateList>
-            <strong>후보 시간</strong>
-            <ul>
-              {candidates.map((c,idx)=>(
-                <li key={idx} style={{cursor:"pointer", fontWeight:selectedCandidate===c?"bold":c===topCandidate?"bold":"normal", color:c===topCandidate?"#1976d2":"#333"}}
-                    onClick={()=>setSelectedCandidate(c)}>
-                  {`${c.date} | ${c.start}:00 ~ ${c.end+1}:00 (${c.participants}명)`}{c===topCandidate?" (1순위)":""}
-                </li>
-              ))}
-            </ul>
-          </CandidateList>
+        <CandidateList>
+          <strong>후보 시간</strong>
+          <ul>
+            {(showAllCandidates ? rankedCandidates : rankedCandidates.filter(c => c.rank === 1))
+              .map((c, idx) => (
+              <li key={idx}
+                  style={{
+                    cursor:"pointer",
+                    fontWeight: selectedCandidate===c||c.rank===1 ? "bold" : "normal",
+                    color: c.rank===1 ? "#1976d2" : "#333",
+                    fontSize: c.rank===1 ? 19 : 18,
+                  }}
+                  onClick={()=> {
+                    setSelectedCandidate(c);
+                    setSelectedDate(new Date(c.date));
+                  }}>
+                {`${c.date} | ${c.start}:00 ~ ${c.end+1}:00 (${c.participants}명)`} {c.rank===1 ? "(1순위)" : `(${c.rank}순위)`}
+              </li>
+            ))}
+          </ul>
 
-          <Button onClick={handleConfirm}>시간 확정하기</Button>
+          <Button 
+            style={{background:"#1976d2"}} 
+            onClick={()=>setShowAllCandidates(prev=>!prev)}>
+            {showAllCandidates ? "접기" : "더보기"}
+          </Button>
+        </CandidateList>
+
+        <Button onClick={handleConfirm}>시간 확정하기</Button>
       </InfoBox>
 
       <CalendarTimeWrapper>
@@ -257,8 +324,9 @@ const rankedCandidates = [...candidates]
                 const dateKey = selectedDate?formatDate(selectedDate):"";
                 const count = multiSelectedTimes[dateKey]?.[hour] || 0;
                 const percent = count===0?0:Math.round((count/totalPeople)*100);
-const selected = selectedCandidate ? selectedCandidate.start <= hour && selectedCandidate.end >= hour : false;
-const top = topCandidate ? topCandidate.start <= hour && topCandidate.end >= hour : false;
+
+                const selected = selectedCandidate ? selectedCandidate.start<=hour && selectedCandidate.end>=hour && selectedCandidate.date===dateKey : false;
+                const rank1 = rankedCandidates.find(c=>c.rank===1 && c.date===dateKey && c.start<=hour && c.end>=hour) ? true : false;
 
                 return (
                   <TimeRow key={hour}>
@@ -266,9 +334,9 @@ const top = topCandidate ? topCandidate.start <= hour && topCandidate.end >= hou
                     <TimeCellTable
                       percent={percent}
                       selected={selected}
-                      top={top}
-                      onClick={()=> {
-                        const candidate = candidates.find(c=>c.start<=hour && c.end>=hour && c.date===dateKey);
+                      rank1={rank1}
+                      onClick={()=>{
+                        const candidate = rankedCandidates.find(c=>c.start<=hour && c.end>=hour && c.date===dateKey);
                         if(candidate) setSelectedCandidate(candidate);
                       }}
                     />
@@ -277,21 +345,35 @@ const top = topCandidate ? topCandidate.start <= hour && topCandidate.end >= hou
               })}
             </tbody>
           </TimeTable>
-
         </TimeTableBox>
       </CalendarTimeWrapper>
 
-      {showModal && selectedCandidate && (
-        <ModalBackground>
-          <ModalBox>
-            <h3>✅ 약속이 확정되었습니다!</h3>
-            <p>{`${selectedCandidate.date} | ${selectedCandidate.start}:00 ~ ${selectedCandidate.end+1}:00 | ${selectedCandidate.participants}명 참석`}</p>
-            <Button onClick={()=>window.location.href="/"}>홈으로</Button>
-            <ShareButton onClick={handleShare}>공유하기</ShareButton>
-          </ModalBox>
-        </ModalBackground>
-      )}
+{showModal && selectedCandidate && (
+  <ModalBackground>
+    <ModalBox>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          onClick={() => setShowModal(false)}
+          style={{
+            background: "transparent",
+            border: "none",
+            fontSize: "20px",
+            cursor: "pointer",
+          }}
+        >
+          ✖
+        </button>
+      </div>
+      <h3>✅ 약속이 확정되었습니다!</h3>
+      <p>{`${selectedCandidate.date} | ${selectedCandidate.start}:00 ~ ${selectedCandidate.end+1}:00 | ${selectedCandidate.participants}명 참석`}</p>
+      <Button onClick={()=>window.location.href="/"}>홈으로</Button>
+      <ShareButton onClick={handleShare}>공유하기</ShareButton>
+    </ModalBox>
+  </ModalBackground>
+)}
+
     </Container>
+    </>
   );
 };
 
