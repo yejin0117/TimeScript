@@ -348,29 +348,29 @@ useEffect(() => {
         </TimeTableBox>
       </CalendarTimeWrapper>
 
-{showModal && selectedCandidate && (
-  <ModalBackground>
-    <ModalBox>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <button
-          onClick={() => setShowModal(false)}
-          style={{
-            background: "transparent",
-            border: "none",
-            fontSize: "20px",
-            cursor: "pointer",
-          }}
-        >
-          ✖
-        </button>
-      </div>
-      <h3>✅ 약속이 확정되었습니다!</h3>
-      <p>{`${selectedCandidate.date} | ${selectedCandidate.start}:00 ~ ${selectedCandidate.end+1}:00 | ${selectedCandidate.participants}명 참석`}</p>
-      <Button onClick={()=>window.location.href="/"}>홈으로</Button>
-      <ShareButton onClick={handleShare}>공유하기</ShareButton>
-    </ModalBox>
-  </ModalBackground>
-)}
+      {showModal && selectedCandidate && (
+        <ModalBackground>
+          <ModalBox>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "20px",
+                  cursor: "pointer",
+                }}
+              >
+                ✖
+              </button>
+            </div>
+            <h3>✅ 약속이 확정되었습니다!</h3>
+            <p>{`${selectedCandidate.date} | ${selectedCandidate.start}:00 ~ ${selectedCandidate.end+1}:00 | ${selectedCandidate.participants}명 참석`}</p>
+            <Button onClick={()=>window.location.href="/"}>홈으로</Button>
+            <ShareButton onClick={handleShare}>공유하기</ShareButton>
+          </ModalBox>
+        </ModalBackground>
+      )}
 
     </Container>
     </>
